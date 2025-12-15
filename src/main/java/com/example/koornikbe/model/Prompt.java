@@ -4,12 +4,14 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import java.util.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "rounds"})
 @Entity
 @Table(name = "prompts")
 public class Prompt {

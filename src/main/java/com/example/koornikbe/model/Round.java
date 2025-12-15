@@ -4,11 +4,13 @@ import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import java.util.*;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @Builder
 @Entity
 @Table(name = "rounds")
@@ -17,8 +19,8 @@ public class Round {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order", nullable = false)
-    private Integer order;
+    @Column(name = "round_order", nullable = false)
+    private Integer roundOrder;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)

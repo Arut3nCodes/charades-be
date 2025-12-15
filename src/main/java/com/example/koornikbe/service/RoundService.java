@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -41,4 +42,12 @@ public class RoundService {
         }
         repository.deleteById(id);
     }
+
+    @Transactional
+    public String getPromptNameByRoundId(Long roundId) {
+    Round round = repository.findById(roundId)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Round not found: " + roundId));
+    return round.getPrompt() != null ? round.getPrompt().getName() : "";
+}
+
 }

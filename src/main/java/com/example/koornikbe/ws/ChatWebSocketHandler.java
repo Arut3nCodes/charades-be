@@ -19,6 +19,8 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final RoundService roundService;
 
     private final ConcurrentMap<Long, Set<WebSocketSession>> gameSessions = new ConcurrentHashMap<>();
+    private final Set<WebSocketSession> globalSessions = ConcurrentHashMap.newKeySet();
+
     private final ObjectMapper mapper = new ObjectMapper();
 
     public ChatWebSocketHandler(GameService gameService, RoundService roundService) {
@@ -28,11 +30,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) {
+        globalSessions.add(session);
         System.out.println("WS CONNECTED: " + session.getId());
     }
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
+        globalSessions.remove(session);
         for (Set<WebSocketSession> set : gameSessions.values()) {
             set.remove(session);
         }
@@ -43,14 +47,29 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         ChatMessage chatMsg = mapper.readValue(message.getPayload(), ChatMessage.class);
 
+
+        if (chatMsg.getGameId() == null) {
+            globalSessions.add(session);
+            String jsonGlobal = mapper.writeValueAsString(chatMsg);
+            for (WebSocketSession s : globalSessions) {
+                if (s.isOpen()) {
+                    s.sendMessage(new TextMessage(jsonGlobal));
+                }
+            }
+            return;
+        }
+
+
         gameSessions.putIfAbsent(chatMsg.getGameId(), ConcurrentHashMap.newKeySet());
         Set<WebSocketSession> sessions = gameSessions.get(chatMsg.getGameId());
         sessions.add(session);
 
         Game game = gameService.getGameById(chatMsg.getGameId());
-        String currentPrompt = roundService.getPromptNameByRoundId(chatMsg.getRoundId());
+        String currentPrompt = chatMsg.getRoundId() != null
+                ? roundService.getPromptNameByRoundId(chatMsg.getRoundId())
+                : null;
 
-        if (chatMsg.getContent().equalsIgnoreCase(currentPrompt)) {
+        if (currentPrompt != null && chatMsg.getContent().equalsIgnoreCase(currentPrompt)) {
             chatMsg.setSystemMessage(true);
             chatMsg.setContent(chatMsg.getSender() + " zgadł hasło!");
         }

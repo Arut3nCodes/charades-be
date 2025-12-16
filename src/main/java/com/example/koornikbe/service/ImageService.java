@@ -22,6 +22,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ImageService {
+    private static final Path TEST_IMAGE_DIR = Paths.get("test-images");
     private final ImageRepository repository;
 
     public List<Image> getAllImages() {
@@ -79,11 +80,9 @@ public class ImageService {
 
     @Transactional
     public Image updateImageFromPixels(Long imageId, List<PixelColorData> pixelDataList) {
-        // Load existing image entity
         Image image = repository.findById(imageId)
                 .orElseThrow(() -> new RuntimeException("Image not found"));
 
-        // Convert byte[] to BufferedImage
         BufferedImage bufferedImage;
         try (var in = new java.io.ByteArrayInputStream(image.getContent())) {
             bufferedImage = ImageIO.read(in);
@@ -91,7 +90,6 @@ public class ImageService {
             throw new RuntimeException("Failed to read existing image", e);
         }
 
-        // Update pixels
         for (PixelColorData data : pixelDataList) {
             Color color = Color.decode(data.getColor());
             for (int[] pixel : data.getPixels()) {
@@ -103,11 +101,9 @@ public class ImageService {
             }
         }
 
-        // Convert back to byte[]
         byte[] updatedBytes = toPng(bufferedImage);
         image.setContent(updatedBytes);
 
-        // Persist changes
         return repository.save(image);
     }
 
@@ -119,8 +115,6 @@ public class ImageService {
             throw new RuntimeException("Failed to generate image", e);
         }
     }
-
-    private static final Path TEST_IMAGE_DIR = Paths.get("test-images");
 
     public Path exportImageToProjectDir(Long imageId) {
         Image image = repository.findById(imageId)

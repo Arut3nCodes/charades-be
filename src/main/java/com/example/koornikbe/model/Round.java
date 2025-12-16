@@ -20,7 +20,7 @@ public class Round {
     private Long id;
 
     @Column(name = "round_order", nullable = false)
-    private Integer roundOrder;
+    private Integer order;
 
     @Lob
     @Basic(fetch = FetchType.LAZY)

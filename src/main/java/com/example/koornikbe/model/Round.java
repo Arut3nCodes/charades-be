@@ -17,7 +17,7 @@ public class Round {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "order", nullable = false)
+    @Column(name = "round_order", nullable = false)
     private Integer order;
 
     @Lob

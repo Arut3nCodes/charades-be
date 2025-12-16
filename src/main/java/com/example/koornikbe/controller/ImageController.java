@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.nio.file.Path;
 import java.util.List;
 
 @RestController
@@ -53,6 +54,13 @@ public class ImageController {
         return ResponseEntity.ok(updated);
     }
 
+    @PostMapping("/{id}/export")
+    public ResponseEntity<String> exportImage(@PathVariable Long id) {
+        Path path = service.exportImageToProjectDir(id);
+        return ResponseEntity.ok(
+                "Image exported to: " + path.toAbsolutePath()
+        );
+    }
 
     @PutMapping("/{id}")
     public Image update(@PathVariable Long id, @RequestBody Image body) {

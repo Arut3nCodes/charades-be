@@ -13,6 +13,10 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Service
@@ -113,6 +117,24 @@ public class ImageService {
             return baos.toByteArray();
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate image", e);
+        }
+    }
+
+    private static final Path TEST_IMAGE_DIR = Paths.get("test-images");
+
+    public Path exportImageToProjectDir(Long imageId) {
+        Image image = repository.findById(imageId)
+                .orElseThrow(() -> new RuntimeException("Image not found"));
+
+        try {
+            Files.createDirectories(TEST_IMAGE_DIR);
+
+            Path outputPath = TEST_IMAGE_DIR.resolve(imageId + ".png");
+            Files.write(outputPath, image.getContent());
+
+            return outputPath;
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to export image to project directory", e);
         }
     }
 }

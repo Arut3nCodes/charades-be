@@ -5,6 +5,9 @@ import com.example.koornikbe.model.Image;
 import com.example.koornikbe.repository.ImageRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -29,9 +32,16 @@ public class ImageService {
         return repository.findAll();
     }
 
+    @Cacheable(
+            cacheNames = "imageById",
+            key = "#id",
+            condition = "@cacheToggle.isEnabled()"
+    )
     public Image getImageById(Long id) {
-        return repository.findById(id)
+        Image img = repository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found: " + id));
+        img.getContent();
+        return img;
     }
 
     public Image addImage(Image entity) {
@@ -39,6 +49,7 @@ public class ImageService {
         return repository.save(entity);
     }
 
+    @CachePut(cacheNames = "imageById", key = "#id")
     public Image updateImage(Long id, Image entity) {
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found: " + id);
@@ -47,6 +58,7 @@ public class ImageService {
         return repository.save(entity);
     }
 
+    @CacheEvict(cacheNames = "imageById", key = "#id")
     public void deleteImage(Long id) {
         if (!repository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Image not found: " + id);
@@ -78,6 +90,7 @@ public class ImageService {
         return addImage(image);
     }
 
+    @CachePut(cacheNames = "imageById", key = "#imageId")
     @Transactional
     public Image updateImageFromPixels(Long imageId, List<PixelColorData> pixelDataList) {
         Image image = repository.findById(imageId)
